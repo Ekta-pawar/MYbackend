@@ -1,0 +1,7 @@
+/.vscode
+/n0de-modules
+./dist
+
+*.evn
+.evn
+.env.*
