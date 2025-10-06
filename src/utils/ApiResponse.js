@@ -1,4 +1,4 @@
-class ApiResponse {
+class ApiResponse {  //class
     constructor( statusCode,
  message="success",
         data,
