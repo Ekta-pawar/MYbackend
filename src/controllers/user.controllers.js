@@ -161,3 +161,70 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError("Invalid or expired refresh token", 401);
   }
 });
+
+ export const changeCurrentUserPassword = asyncHandler(async (req, res) => {
+const {oldPassword,newPassword} = req.body;
+const user=await User.findById(req.user._id);
+const isPasswordCorrect = await user.isPassword(oldPassword);
+if(!isPasswordCorrect){
+  throw new ApiError("Old password is incorrect",400);  
+}
+user.password=newPassword;
+ await user.save({validateBeforeSave:false});
+ return res.status(200)
+.json(new ApiResponse(200,{},"Password changed successfully"));
+})
+ export const getCurrentUser = asyncHandler(async (req, res) => {
+  return res.status(200).json(new ApiResponse(200, req.user, "Current user fetched successfully"));
+ })
+ export const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, username, bio } = req.body;
+if(!fullName || !email){
+  throw new ApiError("Fullname and email are required",400);
+}
+
+const user=await User.findByIdAndUpdate(
+  req.user._id,
+  {$set:{fullName,email}},//mongoose update operators
+  {new:true}
+
+  ).select("-password ");
+ return res.status(200).json(new ApiResponse(200, user, "Account details updated successfully"));
+})
+export const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath  = req.file?.path;
+if(!avatarLocalPath){
+  throw new ApiError("Avatar file is required",400);
+}
+const avatar = await uploadOneCloudinary(avatarLocalPath);
+if(!avatar.url){
+  throw new ApiError("Failed to upload avatar",500);
+}
+await User.findByIdAndUpdate(
+  req.user._id,
+  {$set:{avatar:avatar.url}},//mongoose update operators
+  {new:true}
+).select("-password ");
+ return res.status(200).json(new ApiResponse(200, avatar.url, "Avatar updated successfully"));
+
+})
+  export const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+
+  if (!coverImageLocalPath) {
+    throw new ApiError("Cover image file is required", 400);
+  }
+
+  const coverImage = await uploadOneCloudinary(coverImageLocalPath);
+  if (!coverImage.url) {
+    throw new ApiError("Failed to upload cover image", 500);
+  }
+
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: { coverImage: coverImage.url } }, // mongoose update operators
+    { new: true }
+  ).select("-password ");
+
+  return res.status(200).json(new ApiResponse(200, coverImage.url, "Cover image updated successfully"));
+});
